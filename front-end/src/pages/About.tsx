@@ -1,6 +1,7 @@
 import { BrandPoster } from '../components/BrandLogo'
+import { CvDownloadButton } from '../components/CvDownload'
 import { Reveal } from '../components/Reveal'
-import { company } from '../data/content'
+import { company, cv } from '../data/content'
 
 export function AboutPage() {
   return (
@@ -12,6 +13,9 @@ export function AboutPage() {
           {company.tagline} Nous existons pour une chose : concevoir des applications et des logiciels d’entreprise qui
           tiennent la route, le lundi matin, quand les équipes arrivent.
         </p>
+        <div className="hero-cta">
+          <CvDownloadButton />
+        </div>
       </section>
 
       <section className="section" style={{ paddingTop: 0 }}>
@@ -34,6 +38,11 @@ export function AboutPage() {
                 Autour du code, nous accompagnons : design UI/UX, communication, marketing, conseil. Mais la grande force,
                 celle qu’on met en avant, reste le développement d’applications et de logiciels de solutions d’entreprise.
               </p>
+              <h3>Le fondateur</h3>
+              <p>
+                {cv.name} — {cv.role}. Formation à {cv.education.school}, {cv.education.place} ({cv.education.diploma}).
+              </p>
+              <CvDownloadButton />
             </article>
           </Reveal>
         </div>

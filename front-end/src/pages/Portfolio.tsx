@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Reveal } from '../components/Reveal'
 import { BrandLogo } from '../components/BrandLogo'
+import { CvDownloadButton } from '../components/CvDownload'
 import { cv } from '../data/content'
 import { projects } from '../data/projects'
 
@@ -65,13 +66,15 @@ export function PortfolioPage() {
             </div>
             <p>{cv.role} · {cv.company}</p>
           </div>
-          <div className="cv">
+          <CvDownloadButton />
+          <div className="cv" style={{ marginTop: 18 }}>
             <Reveal>
-              <article className="card" style={{ textAlign: 'center' }}>
+              <article className="card" style={{ textAlign: 'left' }}>
                 <BrandLogo size={120} />
                 <h3 style={{ marginTop: 16 }}>{cv.name}</h3>
                 <p>{cv.role}</p>
-                <div className="stack-pills" style={{ justifyContent: 'center', marginTop: 16 }}>
+                <p>{cv.education.diploma} · {cv.education.school}, {cv.education.place}</p>
+                <div className="stack-pills" style={{ justifyContent: 'flex-start', marginTop: 16 }}>
                   {cv.stack.map((tech) => (
                     <span key={tech}>{tech}</span>
                   ))}

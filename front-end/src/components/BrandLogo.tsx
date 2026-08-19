@@ -19,7 +19,7 @@ export function BrandLogo({ size = 46, className = '' }: { size?: number; classN
           animate={{ rotateY: 0, opacity: 1, scale: 1 }}
           exit={{ rotateY: 90, opacity: 0, scale: 0.7 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          style={{ width: size, height: size, objectFit: 'cover', borderRadius: '50%' }}
+          style={{ width: size, height: size, objectFit: 'cover', borderRadius: 16 }}
         />
       </AnimatePresence>
     </span>

@@ -127,6 +127,16 @@ export const cv = {
   company: 'Fondateur — LK-group',
   pitch:
     'Je construis des logiciels que les équipes utilisent vraiment. Pas des maquettes qui dorment : des suites métier, des PWA, des espaces admin, des flux qui tiennent la charge d’une clinique, d’un dépôt ou d’une école. LK-group est le nom de cette exigence : des solutions qui inspirent, des expériences qui laissent une marque.',
+  education: {
+    school: 'Saint-Plan',
+    place: 'Côte d’Ivoire',
+    diploma: 'Bac+1',
+  },
+  contact: {
+    location: 'Côte d’Ivoire',
+    email: 'À communiquer',
+    phone: 'À communiquer',
+  },
   strengths: [
     'Architecturer un produit de bout en bout (front, API, données, rôles)',
     'Transformer un métier réel en logiciel clair : stock, santé, école, réservation',

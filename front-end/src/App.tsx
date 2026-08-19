@@ -27,6 +27,7 @@ export default function App() {
         <PwaManifest />
         <ScrollProgress />
         <div className="site-shell">
+        <div className="water-left" aria-hidden="true" />
         {location.pathname !== '/' && <AnimatedBackground />}
         {location.pathname === '/' && <CityScroll />}
         <Navbar />

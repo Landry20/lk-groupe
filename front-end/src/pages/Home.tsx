@@ -41,6 +41,7 @@ export function HomePage() {
           </div>
         </motion.div>
       </section>
+      <div className="city-run" aria-hidden="true" />
 
       <section className="section">
         <div className="grid-4">
