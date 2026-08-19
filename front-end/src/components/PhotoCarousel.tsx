@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import type { ProjectPhoto } from '../data/projects'
+import { asset } from '../lib/asset'
 
 export function PhotoCarousel({ photos }: { photos: ProjectPhoto[] }) {
   const [index, setIndex] = useState(0)
@@ -18,7 +19,7 @@ export function PhotoCarousel({ photos }: { photos: ProjectPhoto[] }) {
         <AnimatePresence mode="wait">
           <motion.img
             key={current.src}
-            src={current.src}
+            src={asset(current.src)}
             alt={current.caption}
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}

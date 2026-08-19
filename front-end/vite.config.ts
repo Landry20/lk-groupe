@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { copyFileSync, existsSync } from 'node:fs'
+import { resolve } from 'node:path'
 
 const silentHeaders = {
   'X-Content-Type-Options': 'nosniff',
@@ -10,7 +12,10 @@ const silentHeaders = {
   'Cross-Origin-Opener-Policy': 'same-origin',
 }
 
+const base = process.env.VITE_BASE ?? '/'
+
 export default defineConfig({
+  base,
   resolve: {
     dedupe: ['react', 'react-dom', 'three'],
   },
@@ -31,7 +36,7 @@ export default defineConfig({
       manifest: false,
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpeg,webp,woff2,webmanifest}'],
-        navigateFallback: '/index.html',
+        navigateFallback: `${base}index.html`.replace('//index.html', '/index.html'),
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
@@ -44,6 +49,13 @@ export default defineConfig({
         ],
       },
     }),
+    {
+      name: 'spa-github-pages',
+      closeBundle() {
+        const index = resolve('dist/index.html')
+        if (existsSync(index)) copyFileSync(index, resolve('dist/404.html'))
+      },
+    },
   ],
   server: {
     port: 5173,

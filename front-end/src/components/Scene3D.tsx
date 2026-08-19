@@ -4,11 +4,12 @@ import { Suspense, useMemo, useRef } from 'react'
 import { SRGBColorSpace, TextureLoader } from 'three'
 import type { Group, Mesh } from 'three'
 import { useTheme } from '../context/ThemeContext'
+import { asset } from '../lib/asset'
 
 function LogoMark({ dark }: { dark: boolean }) {
   const group = useRef<Group>(null)
   const orbit = useRef<Mesh>(null)
-  const texture = useLoader(TextureLoader, dark ? '/logos/logo-dark.jpeg' : '/logos/logo-light.jpeg')
+  const texture = useLoader(TextureLoader, asset(dark ? '/logos/logo-dark.jpeg' : '/logos/logo-light.jpeg'))
   texture.colorSpace = SRGBColorSpace
   texture.anisotropy = 8
 

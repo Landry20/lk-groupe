@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react'
 import { useTheme } from '../context/ThemeContext'
+import { asset } from '../lib/asset'
 
 export function AnimatedBackground() {
   const { theme } = useTheme()
-  const src = theme === 'dark' ? '/logos/logo-dark.jpeg' : '/logos/logo-light.jpeg'
+  const src = asset(theme === 'dark' ? '/logos/logo-dark.jpeg' : '/logos/logo-light.jpeg')
 
   return (
     <div className="bg-layer" aria-hidden="true">

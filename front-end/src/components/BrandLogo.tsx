@@ -1,9 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTheme } from '../context/ThemeContext'
+import { asset } from '../lib/asset'
 
 export function BrandLogo({ size = 46, className = '' }: { size?: number; className?: string }) {
   const { theme } = useTheme()
-  const src = theme === 'dark' ? '/logos/logo-dark.jpeg' : '/logos/logo-light.jpeg'
+  const src = asset(theme === 'dark' ? '/logos/logo-dark.jpeg' : '/logos/logo-light.jpeg')
 
   return (
     <span className={className} style={{ width: size, height: size, display: 'inline-grid', placeItems: 'center' }}>
@@ -27,7 +28,7 @@ export function BrandLogo({ size = 46, className = '' }: { size?: number; classN
 
 export function BrandPoster() {
   const { theme } = useTheme()
-  const src = theme === 'dark' ? '/logos/brand-dark.jpeg' : '/logos/brand-light.jpeg'
+  const src = asset(theme === 'dark' ? '/logos/brand-dark.jpeg' : '/logos/brand-light.jpeg')
 
   return (
     <AnimatePresence mode="wait">

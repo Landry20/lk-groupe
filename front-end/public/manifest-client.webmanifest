@@ -1,10 +1,10 @@
 {
-  "id": "/",
+  "id": "./",
   "name": "LK-group",
   "short_name": "LK-group",
   "description": "Développement d'applications et de logiciels d'entreprise. Solutions that inspire, experiences that leave a mark.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#05070d",
@@ -12,19 +12,19 @@
   "lang": "fr",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "./favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/logos/logo-dark.jpeg",
+      "src": "./logos/logo-dark.jpeg",
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "/logos/logo-light.jpeg",
+      "src": "./logos/logo-light.jpeg",
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "maskable"

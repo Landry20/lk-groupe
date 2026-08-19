@@ -1,12 +1,13 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
+import { asset } from '../lib/asset'
 
 export function PwaManifest() {
   const { pathname } = useLocation()
   const admin = pathname.startsWith('/admin')
 
   useEffect(() => {
-    const href = admin ? '/manifest-admin.webmanifest' : '/manifest-client.webmanifest'
+    const href = asset(admin ? '/manifest-admin.webmanifest' : '/manifest-client.webmanifest')
     let link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
     if (!link) {
       link = document.createElement('link')
