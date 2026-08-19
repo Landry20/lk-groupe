@@ -49,6 +49,49 @@ const cliniquePhotos: ProjectPhoto[] = [
   { src: '/projects/clinique/statut-global.png', caption: 'Statut global de l’établissement' },
 ]
 
+const stockMagasinPhotos: ProjectPhoto[] = [
+  { src: '/projects/stock-magasin/admin/page-login.PNG', caption: 'Admin — connexion au siège' },
+  { src: '/projects/stock-magasin/admin/tableau-bord.PNG', caption: 'Admin — tableau de bord du réseau' },
+  { src: '/projects/stock-magasin/admin/menu-boutique.PNG', caption: 'Admin — boutiques et magasins' },
+  { src: '/projects/stock-magasin/admin/menu-vendeur.PNG', caption: 'Admin — vendeurs et personnel' },
+  { src: '/projects/stock-magasin/admin/menu-stock.PNG', caption: 'Admin — stock et inventaire' },
+  { src: '/projects/stock-magasin/admin/menu-vente.PNG', caption: 'Admin — ventes du réseau' },
+  { src: '/projects/stock-magasin/admin/menu-transfert.PNG', caption: 'Admin — transferts inter-magasins' },
+  { src: '/projects/stock-magasin/admin/menu-commande.PNG', caption: 'Admin — commandes fournisseurs' },
+  { src: '/projects/stock-magasin/admin/menu-fournisseur.PNG', caption: 'Admin — fournisseurs' },
+  { src: '/projects/stock-magasin/admin/menu-benefice.PNG', caption: 'Admin — bénéfices et marges' },
+  { src: '/projects/stock-magasin/admin/menu-parametre.PNG', caption: 'Admin — paramètres' },
+  { src: '/projects/stock-magasin/vendeur/login.PNG', caption: 'Vendeur — connexion boutique' },
+  { src: '/projects/stock-magasin/vendeur/tableau-bord.PNG', caption: 'Vendeur — tableau de bord du magasin' },
+  { src: '/projects/stock-magasin/vendeur/menu-stock.PNG', caption: 'Vendeur — stock du rayon' },
+  { src: '/projects/stock-magasin/vendeur/menu-vents.PNG', caption: 'Vendeur — ventes' },
+  { src: '/projects/stock-magasin/vendeur/sous-menu-vente-normarle.PNG', caption: 'Vendeur — vente au comptoir' },
+  { src: '/projects/stock-magasin/vendeur/menu-client.PNG', caption: 'Vendeur — clients' },
+  { src: '/projects/stock-magasin/vendeur/menu-transfert.PNG', caption: 'Vendeur — transferts' },
+  { src: '/projects/stock-magasin/facture.jpg', caption: 'Document de facturation — Stock magasin' },
+]
+
+const stockAutoPhotos: ProjectPhoto[] = [
+  { src: '/projects/stock-auto/admin/page-login.PNG', caption: 'Admin — connexion direction atelier' },
+  { src: '/projects/stock-auto/admin/tableau-bord.PNG', caption: 'Admin — tableau de bord pièces & atelier' },
+  { src: '/projects/stock-auto/admin/menu-boutique.PNG', caption: 'Admin — dépôts et points de vente' },
+  { src: '/projects/stock-auto/admin/menu-vendeur.PNG', caption: 'Admin — équipe magasin / atelier' },
+  { src: '/projects/stock-auto/admin/menu-stock.PNG', caption: 'Admin — stock pièces' },
+  { src: '/projects/stock-auto/admin/menu-vente.PNG', caption: 'Admin — ventes et sorties' },
+  { src: '/projects/stock-auto/admin/menu-transfert.PNG', caption: 'Admin — transferts entre dépôts' },
+  { src: '/projects/stock-auto/admin/menu-commande.PNG', caption: 'Admin — commandes fournisseurs' },
+  { src: '/projects/stock-auto/admin/menu-fournisseur.PNG', caption: 'Admin — fournisseurs pièces' },
+  { src: '/projects/stock-auto/admin/menu-benefice.PNG', caption: 'Admin — bénéfices' },
+  { src: '/projects/stock-auto/admin/menu-parametre.PNG', caption: 'Admin — paramètres' },
+  { src: '/projects/stock-auto/vendeur/login.PNG', caption: 'Vendeur — connexion dépôt' },
+  { src: '/projects/stock-auto/vendeur/tableau-bord.PNG', caption: 'Vendeur — tableau de bord' },
+  { src: '/projects/stock-auto/vendeur/menu-stock.PNG', caption: 'Vendeur — stock pièces' },
+  { src: '/projects/stock-auto/vendeur/menu-vents.PNG', caption: 'Vendeur — ventes' },
+  { src: '/projects/stock-auto/vendeur/sous-menu-vente-normarle.PNG', caption: 'Vendeur — vente au comptoir' },
+  { src: '/projects/stock-auto/vendeur/menu-client.PNG', caption: 'Vendeur — clients' },
+  { src: '/projects/stock-auto/vendeur/menu-transfert.PNG', caption: 'Vendeur — transferts' },
+]
+
 export const projects: Project[] = [
   {
     id: 'stock-magasin',
@@ -74,7 +117,7 @@ export const projects: Project[] = [
       'Espace système',
     ],
     stack: ['React', 'TypeScript', 'Laravel', 'Sanctum', 'MySQL', 'PWA'],
-    photos: [{ src: '/projects/stock-magasin/facture.jpg', caption: 'Document de facturation — Stock magasin' }],
+    photos: stockMagasinPhotos,
   },
   {
     id: 'stock-auto',
@@ -98,7 +141,7 @@ export const projects: Project[] = [
       'PWA',
     ],
     stack: ['React', 'TypeScript', 'Laravel', 'Sanctum', 'MySQL', 'PWA'],
-    photos: [],
+    photos: stockAutoPhotos,
   },
   {
     id: 'clinique',

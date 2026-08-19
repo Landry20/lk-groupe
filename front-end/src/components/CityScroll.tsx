@@ -14,29 +14,26 @@ import type { Group, InstancedMesh } from 'three'
 import { asset } from '../lib/asset'
 import { useTheme } from '../context/ThemeContext'
 
-type Block = {
-  x: number
-  z: number
-  h: number
-  w: number
-  d: number
-  color: string
-}
+const ROAD_X = [-21, -14, -7, 0, 7, 14]
+const ROAD_Z = [-14, -7, 0, 7, 14, 21, 28]
+const HQ = { x: -14, z: 35 }
+const ROAD = 1.55
+const WALK = 2.15
 
 type Key = { t: number; p: [number, number, number]; l: [number, number, number] }
-
-const HQ = { x: -14, z: 34 }
+type Lot = { x: number; z: number; seed: number; kind: 'house' | 'apt' | 'park' }
 
 const path: Key[] = [
-  { t: 0, p: [0, 14, -20], l: [0, 1.2, 8] },
-  { t: 0.14, p: [0.15, 3.6, -11], l: [0, 1.35, 2] },
-  { t: 0.3, p: [0.4, 2.45, -1], l: [0.2, 1.25, 10] },
-  { t: 0.44, p: [0.25, 2.35, 9.2], l: [-5, 1.4, 12] },
-  { t: 0.56, p: [-7, 2.35, 12], l: [-16, 1.35, 12] },
-  { t: 0.66, p: [-13.6, 2.4, 12.4], l: [-14, 1.7, 22] },
-  { t: 0.8, p: [-14, 2.7, 21], l: [-14, 4.2, 31] },
-  { t: 0.9, p: [-14, 2.15, 27.2], l: [-14, 2.2, 31] },
-  { t: 1, p: [-14, 2.45, 32.6], l: [-14, 3.4, 39.4] },
+  { t: 0, p: [0, 12.5, -18], l: [0, 1.1, 6] },
+  { t: 0.12, p: [0.1, 3.1, -10], l: [0, 1.2, 2] },
+  { t: 0.28, p: [0.25, 1.85, -1], l: [0.1, 1.15, 8] },
+  { t: 0.42, p: [0.2, 1.75, 11], l: [-6, 1.2, 14] },
+  { t: 0.55, p: [-7, 1.75, 14], l: [-16, 1.2, 14] },
+  { t: 0.66, p: [-13.7, 1.8, 14.3], l: [-14, 1.35, 22] },
+  { t: 0.8, p: [-14, 2.05, 24], l: [-14, 2.1, 32] },
+  { t: 0.9, p: [-14, 1.55, 30.2], l: [-14, 1.5, 33.2] },
+  { t: 0.95, p: [-14, 1.5, 32.1], l: [-14, 1.45, 35] },
+  { t: 1, p: [-14, 1.55, 34.4], l: [-14, 1.5, 39.2] },
 ]
 
 function mix(a: number, b: number, t: number) {
@@ -57,164 +54,283 @@ function samplePath(t: number) {
   }
 }
 
-function onRoad(x: number, z: number) {
-  if (Math.abs(x) < 2.1 && z < 14.5) return true
-  if (Math.abs(z - 12) < 2.1 && x < 2.2 && x > -17) return true
-  if (Math.abs(x - HQ.x) < 2.1 && z > 10) return true
-  if (Math.abs(x - HQ.x) < 5.2 && Math.abs(z - HQ.z) < 7) return true
-  return false
+function onRoad(x: number, z: number, pad = ROAD + 0.35) {
+  return ROAD_X.some((cx) => Math.abs(x - cx) < pad) || ROAD_Z.some((cz) => Math.abs(z - cz) < pad)
 }
 
-function makeCity(dark: boolean) {
-  const blocks: Block[] = []
-  const palettes = dark
-    ? ['#1b3358', '#0d2748', '#24486f', '#132033', '#00234e']
-    : ['#f3f7fb', '#d7e4f2', '#c3d4e6', '#9bb6d0', '#eef3f8']
-  for (let xi = -11; xi <= 8; xi += 1) {
-    for (let zi = -14; zi <= 42; zi += 1) {
-      const x = xi * 1.7
-      const z = zi * 1.65
-      if (onRoad(x, z)) continue
-      const seed = Math.abs((xi * 47 + zi * 19) * 13) % 100
-      if (seed % 11 === 0) continue
-      const h = 1.4 + (seed % 16) * 0.42 + (Math.abs(xi) > 6 ? 1.1 : 0)
-      blocks.push({
+function nearHq(x: number, z: number) {
+  return Math.abs(x - HQ.x) < 5.5 && Math.abs(z - HQ.z) < 6.2
+}
+
+function makeLots() {
+  const lots: Lot[] = []
+  for (let xi = 0; xi < ROAD_X.length - 1; xi += 1) {
+    for (let zi = 0; zi < ROAD_Z.length - 1; zi += 1) {
+      const x = (ROAD_X[xi] + ROAD_X[xi + 1]) / 2
+      const z = (ROAD_Z[zi] + ROAD_Z[zi + 1]) / 2
+      if (nearHq(x, z)) continue
+      const seed = Math.abs((xi * 31 + zi * 17) * 13) % 100
+      lots.push({
         x,
         z,
-        h,
-        w: 1.15 + (seed % 4) * 0.12,
-        d: 1.15 + ((seed * 5) % 4) * 0.1,
-        color: palettes[seed % palettes.length],
+        seed,
+        kind: seed % 5 === 0 ? 'park' : seed % 3 === 0 ? 'apt' : 'house',
       })
     }
   }
-  return blocks
+  return lots
 }
 
-function makeFacadeTexture(dark: boolean) {
+function makeFacade(dark: boolean, kind: 'house' | 'apt') {
   const canvas = document.createElement('canvas')
-  canvas.width = 256
-  canvas.height = 512
+  const glow = document.createElement('canvas')
+  canvas.width = glow.width = 256
+  canvas.height = glow.height = kind === 'house' ? 256 : 512
   const ctx = canvas.getContext('2d')!
-  ctx.fillStyle = dark ? '#163251' : '#e8eef6'
-  ctx.fillRect(0, 0, 256, 512)
-  const cols = 4
-  const rows = 11
+  const gx = glow.getContext('2d')!
+  ctx.fillStyle = kind === 'house' ? (dark ? '#6a4a32' : '#e8d5bc') : (dark ? '#1a3358' : '#d7e3f0')
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  gx.fillStyle = '#000'
+  gx.fillRect(0, 0, glow.width, glow.height)
+  const rows = kind === 'house' ? 2 : 8
+  const cols = kind === 'house' ? 3 : 4
   for (let r = 0; r < rows; r += 1) {
     for (let c = 0; c < cols; c += 1) {
-      const lit = (r * 9 + c * 5) % 7 !== 2
-      if (dark) {
-        ctx.fillStyle = lit ? ((r + c) % 5 === 0 ? '#ff7900' : '#7ec8ff') : '#070d16'
-      } else {
-        ctx.fillStyle = lit ? '#7ea8c8' : '#cfdcea'
+      const lit = (r * 7 + c * 5) % 4 !== 1
+      const x = 28 + c * (kind === 'house' ? 72 : 52)
+      const y = 22 + r * (kind === 'house' ? 70 : 48)
+      ctx.fillStyle = dark
+        ? (lit ? ((r + c) % 3 === 0 ? '#ffb056' : '#ffe08a') : '#0b1018')
+        : '#8fb6d2'
+      ctx.fillRect(x, y, kind === 'house' ? 38 : 26, kind === 'house' ? 32 : 22)
+      if (dark && lit) {
+        gx.fillStyle = (r + c) % 3 === 0 ? '#ff7900' : '#ffe08a'
+        gx.fillRect(x, y, kind === 'house' ? 38 : 26, kind === 'house' ? 32 : 22)
       }
-      ctx.fillRect(30 + c * 52, 18 + r * 38, 26, 20)
     }
   }
-  ctx.fillStyle = dark ? '#0a1018' : '#31455c'
-  ctx.fillRect(96, 428, 64, 84)
+  ctx.fillStyle = dark ? '#1a140e' : '#4a3728'
+  ctx.fillRect(canvas.width / 2 - 28, canvas.height - 70, 56, 70)
   ctx.fillStyle = '#ff7900'
-  ctx.fillRect(148, 470, 6, 8)
-  const tex = new CanvasTexture(canvas)
-  tex.colorSpace = SRGBColorSpace
-  tex.anisotropy = 8
-  return tex
+  ctx.fillRect(canvas.width / 2 + 16, canvas.height - 38, 5, 7)
+  const map = new CanvasTexture(canvas)
+  const emissive = new CanvasTexture(glow)
+  map.colorSpace = SRGBColorSpace
+  map.anisotropy = 8
+  emissive.anisotropy = 8
+  return { map, emissive }
 }
 
-function Buildings({ dark }: { dark: boolean }) {
+function Ground({ dark }: { dark: boolean }) {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 8]} receiveShadow>
+      <planeGeometry args={[64, 86]} />
+      <meshStandardMaterial color={dark ? '#1c3a24' : '#5ea85a'} />
+    </mesh>
+  )
+}
+
+function Roads({ dark }: { dark: boolean }) {
+  const asphalt = dark ? '#2a3038' : '#6f7682'
+  const walk = dark ? '#3a414c' : '#c9c2b2'
+  const line = '#ff7900'
+  return (
+    <>
+      {ROAD_X.map((x) => (
+        <group key={`vx-${x}`}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.02, 7]}>
+            <planeGeometry args={[ROAD * 2, 52]} />
+            <meshStandardMaterial color={asphalt} />
+          </mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.035, 7]}>
+            <planeGeometry args={[0.07, 52]} />
+            <meshStandardMaterial color={line} emissive={line} emissiveIntensity={dark ? 0.55 : 0.18} />
+          </mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[x - WALK, 0.03, 7]}>
+            <planeGeometry args={[0.7, 52]} />
+            <meshStandardMaterial color={walk} />
+          </mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[x + WALK, 0.03, 7]}>
+            <planeGeometry args={[0.7, 52]} />
+            <meshStandardMaterial color={walk} />
+          </mesh>
+        </group>
+      ))}
+      {ROAD_Z.map((z) => (
+        <group key={`hz-${z}`}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-3.5, 0.025, z]}>
+            <planeGeometry args={[42, ROAD * 2]} />
+            <meshStandardMaterial color={asphalt} />
+          </mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-3.5, 0.04, z]}>
+            <planeGeometry args={[42, 0.07]} />
+            <meshStandardMaterial color={line} emissive={line} emissiveIntensity={dark ? 0.55 : 0.18} />
+          </mesh>
+        </group>
+      ))}
+    </>
+  )
+}
+
+function Houses({ dark }: { dark: boolean }) {
+  const lots = useMemo(() => makeLots().filter((lot) => lot.kind === 'house'), [])
   const mesh = useRef<InstancedMesh>(null)
-  const blocks = useMemo(() => makeCity(dark), [dark])
+  const roofs = useRef<InstancedMesh>(null)
   const dummy = useMemo(() => new Object3D(), [])
-  const facade = useMemo(() => makeFacadeTexture(dark), [dark])
+  const tex = useMemo(() => makeFacade(dark, 'house'), [dark])
+
+  useLayoutEffect(() => {
+    if (!mesh.current || !roofs.current) return
+    lots.forEach((lot, i) => {
+      const w = 2.1 + (lot.seed % 3) * 0.15
+      const d = 1.9 + ((lot.seed * 3) % 3) * 0.12
+      const h = 1.55 + (lot.seed % 4) * 0.08
+      dummy.position.set(lot.x, h / 2, lot.z)
+      dummy.scale.set(w, h, d)
+      dummy.rotation.set(0, 0, 0)
+      dummy.updateMatrix()
+      mesh.current!.setMatrixAt(i, dummy.matrix)
+      mesh.current!.setColorAt(i, new Color(dark ? '#8a6748' : '#f0e0c8'))
+      dummy.position.set(lot.x, h + 0.28, lot.z)
+      dummy.scale.set(w * 0.72, 0.55, d * 0.72)
+      dummy.rotation.set(0, Math.PI / 4, 0)
+      dummy.updateMatrix()
+      roofs.current!.setMatrixAt(i, dummy.matrix)
+    })
+    mesh.current.instanceMatrix.needsUpdate = true
+    roofs.current.instanceMatrix.needsUpdate = true
+    if (mesh.current.instanceColor) mesh.current.instanceColor.needsUpdate = true
+  }, [dummy, lots, dark])
+
+  return (
+    <>
+      <instancedMesh ref={mesh} args={[undefined, undefined, lots.length]}>
+        <boxGeometry />
+        <meshStandardMaterial
+          map={tex.map}
+          emissiveMap={tex.emissive}
+          emissive="#ffffff"
+          emissiveIntensity={dark ? 1.45 : 0}
+          roughness={0.72}
+        />
+      </instancedMesh>
+      <instancedMesh ref={roofs} args={[undefined, undefined, lots.length]}>
+        <coneGeometry args={[1, 1, 4]} />
+        <meshStandardMaterial color={dark ? '#4a2018' : '#b23a22'} roughness={0.7} />
+      </instancedMesh>
+    </>
+  )
+}
+
+function Apartments({ dark }: { dark: boolean }) {
+  const lots = useMemo(() => makeLots().filter((lot) => lot.kind === 'apt'), [])
+  const mesh = useRef<InstancedMesh>(null)
+  const dummy = useMemo(() => new Object3D(), [])
+  const tex = useMemo(() => makeFacade(dark, 'apt'), [dark])
 
   useLayoutEffect(() => {
     if (!mesh.current) return
-    blocks.forEach((block, i) => {
-      dummy.position.set(block.x, block.h / 2, block.z)
-      dummy.scale.set(block.w, block.h, block.d)
+    lots.forEach((lot, i) => {
+      const h = 3.2 + (lot.seed % 4) * 0.55
+      dummy.position.set(lot.x, h / 2, lot.z)
+      dummy.scale.set(2.35, h, 2.05)
       dummy.updateMatrix()
       mesh.current!.setMatrixAt(i, dummy.matrix)
-      mesh.current!.setColorAt(i, new Color(block.color))
+      mesh.current!.setColorAt(i, new Color(dark ? '#1d3b63' : '#c9d8e8'))
     })
     mesh.current.instanceMatrix.needsUpdate = true
     if (mesh.current.instanceColor) mesh.current.instanceColor.needsUpdate = true
-  }, [blocks, dummy])
+  }, [dummy, lots, dark])
 
   return (
-    <instancedMesh ref={mesh} args={[undefined, undefined, blocks.length]}>
+    <instancedMesh ref={mesh} args={[undefined, undefined, lots.length]}>
       <boxGeometry />
       <meshStandardMaterial
-        map={facade}
-        metalness={dark ? 0.18 : 0.04}
-        roughness={dark ? 0.48 : 0.7}
+        map={tex.map}
+        emissiveMap={tex.emissive}
+        emissive="#ffffff"
+        emissiveIntensity={dark ? 1.55 : 0}
+        roughness={0.55}
       />
     </instancedMesh>
   )
 }
 
-function Roads({ dark }: { dark: boolean }) {
-  const asphalt = dark ? '#1a1f2a' : '#8f9aab'
-  const walk = dark ? '#2a3140' : '#c5ced9'
+function Trees() {
+  const lots = useMemo(() => makeLots(), [])
+  const foliage = useRef<InstancedMesh>(null)
+  const trunks = useRef<InstancedMesh>(null)
+  const dummy = useMemo(() => new Object3D(), [])
+  const points = useMemo(() => {
+    const list: { x: number; z: number; s: number }[] = []
+    lots.forEach((lot) => {
+      const n = lot.kind === 'park' ? 5 : 2
+      for (let i = 0; i < n; i += 1) {
+        const a = (lot.seed + i * 37) * 0.17
+        list.push({
+          x: lot.x + Math.cos(a) * (lot.kind === 'park' ? 1.6 : 1.35),
+          z: lot.z + Math.sin(a) * (lot.kind === 'park' ? 1.5 : 1.2),
+          s: 0.85 + ((lot.seed + i) % 5) * 0.12,
+        })
+      }
+    })
+    return list.filter((p) => !onRoad(p.x, p.z, 2) && !nearHq(p.x, p.z))
+  }, [lots])
+
+  useLayoutEffect(() => {
+    if (!foliage.current || !trunks.current) return
+    points.forEach((p, i) => {
+      dummy.position.set(p.x, 1.35 * p.s, p.z)
+      dummy.scale.set(p.s, p.s, p.s)
+      dummy.updateMatrix()
+      foliage.current!.setMatrixAt(i, dummy.matrix)
+      dummy.position.set(p.x, 0.45, p.z)
+      dummy.scale.set(0.18, 0.9, 0.18)
+      dummy.updateMatrix()
+      trunks.current!.setMatrixAt(i, dummy.matrix)
+    })
+    foliage.current.instanceMatrix.needsUpdate = true
+    trunks.current.instanceMatrix.needsUpdate = true
+  }, [dummy, points])
+
   return (
     <>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 14]}>
-        <planeGeometry args={[48, 90]} />
-        <meshStandardMaterial color={dark ? '#0b1018' : '#c8d6e6'} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-        <planeGeometry args={[3.4, 36]} />
-        <meshStandardMaterial color={asphalt} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-7, 0.02, 12]}>
-        <planeGeometry args={[20, 3.4]} />
-        <meshStandardMaterial color={asphalt} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[HQ.x, 0.02, 24]}>
-        <planeGeometry args={[3.4, 28]} />
-        <meshStandardMaterial color={asphalt} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[1.95, 0.03, 0]}>
-        <planeGeometry args={[0.45, 36]} />
-        <meshStandardMaterial color={walk} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-1.95, 0.03, 0]}>
-        <planeGeometry args={[0.45, 36]} />
-        <meshStandardMaterial color={walk} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
-        <planeGeometry args={[0.08, 36]} />
-        <meshStandardMaterial color="#ff7900" emissive="#ff7900" emissiveIntensity={dark ? 0.45 : 0.2} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[HQ.x, 0.04, 24]}>
-        <planeGeometry args={[0.08, 28]} />
-        <meshStandardMaterial color="#ff7900" emissive="#ff7900" emissiveIntensity={dark ? 0.45 : 0.2} />
-      </mesh>
+      <instancedMesh ref={trunks} args={[undefined, undefined, points.length]}>
+        <cylinderGeometry args={[1, 1, 1, 6]} />
+        <meshStandardMaterial color="#6b3e1d" />
+      </instancedMesh>
+      <instancedMesh ref={foliage} args={[undefined, undefined, points.length]}>
+        <sphereGeometry args={[0.7, 10, 10]} />
+        <meshStandardMaterial color="#2f9e45" />
+      </instancedMesh>
     </>
   )
+}
+
+function lampSpots() {
+  const list: [number, number][] = []
+  ROAD_X.forEach((x) => {
+    for (let z = -14; z <= 28; z += 7) {
+      list.push([x - WALK, z + 1.8], [x + WALK, z - 1.8])
+    }
+  })
+  return list.filter(([x, z]) => !nearHq(x, z))
 }
 
 function Lamps({ dark }: { dark: boolean }) {
   const mesh = useRef<InstancedMesh>(null)
   const dummy = useMemo(() => new Object3D(), [])
-  const spots = useMemo(() => {
-    const list: [number, number][] = []
-    for (let z = -16; z <= 12; z += 4) {
-      list.push([-2.15, z], [2.15, z])
-    }
-    for (let x = -2; x >= -16; x -= 4) {
-      list.push([x, 10.15], [x, 13.85])
-    }
-    for (let z = 14; z <= 30; z += 4) {
-      list.push([HQ.x - 2.15, z], [HQ.x + 2.15, z])
-    }
-    return list
-  }, [])
+  const spots = useMemo(() => lampSpots(), [])
+  const lit = useMemo(
+    () => spots.filter(([x, z]) => Math.abs(x) < 18 && (Math.abs(x) < 3 || Math.abs(x + 14) < 3 || Math.abs(z - 14) < 3)).slice(0, 14),
+    [spots],
+  )
 
   useLayoutEffect(() => {
     if (!mesh.current) return
     spots.forEach(([x, z], i) => {
-      dummy.position.set(x, 1.35, z)
-      dummy.scale.set(0.08, 2.7, 0.08)
+      dummy.position.set(x, 1.25, z)
+      dummy.scale.set(0.07, 2.5, 0.07)
       dummy.updateMatrix()
       mesh.current!.setMatrixAt(i, dummy.matrix)
     })
@@ -228,69 +344,241 @@ function Lamps({ dark }: { dark: boolean }) {
         <meshStandardMaterial color={dark ? '#1c2430' : '#4d5b6c'} />
       </instancedMesh>
       {spots.map(([x, z], i) => (
-        <mesh key={`${x}-${z}-${i}`} position={[x, 2.78, z]}>
-          <sphereGeometry args={[0.12, 8, 8]} />
+        <mesh key={`bulb-${i}`} position={[x, 2.58, z]}>
+          <sphereGeometry args={[0.13, 8, 8]} />
           <meshStandardMaterial
-            color={dark ? '#ffd7a0' : '#fff6d8'}
-            emissive={dark ? '#ffb056' : '#fff2c4'}
-            emissiveIntensity={dark ? 1.4 : 0.5}
+            color="#ffe7b0"
+            emissive="#ffd089"
+            emissiveIntensity={dark ? 3.2 : 0.35}
+            toneMapped={false}
           />
         </mesh>
+      ))}
+      {dark &&
+        lit.map(([x, z], i) => (
+          <pointLight key={`glow-${i}`} position={[x, 2.5, z]} color="#ffc878" intensity={7.5} distance={9} decay={2} />
+        ))}
+    </>
+  )
+}
+
+function TrafficLights() {
+  const crosses = useMemo(() => {
+    const list: [number, number][] = []
+    ;[0, -14, 7].forEach((x) => {
+      ;[0, 14].forEach((z) => list.push([x + WALK, z + WALK]))
+    })
+    return list
+  }, [])
+  return (
+    <>
+      {crosses.map(([x, z], i) => (
+        <group key={`tl-${i}`} position={[x, 0, z]}>
+          <mesh position={[0, 1.15, 0]}>
+            <boxGeometry args={[0.08, 2.3, 0.08]} />
+            <meshStandardMaterial color="#222" />
+          </mesh>
+          <mesh position={[0, 2.35, 0]}>
+            <boxGeometry args={[0.22, 0.62, 0.18]} />
+            <meshStandardMaterial color="#111" />
+          </mesh>
+          <LightHead y={2.52} color="#ff3b30" on={false} />
+          <LightHead y={2.35} color="#ffd60a" on={false} />
+          <LightHead y={2.18} color="#30d158" on />
+        </group>
       ))}
     </>
   )
 }
 
+function LightHead({ y, color, on }: { y: number; color: string; on: boolean }) {
+  return (
+    <mesh position={[0, y, 0.12]}>
+      <sphereGeometry args={[0.055, 8, 8]} />
+      <meshStandardMaterial color={color} emissive={color} emissiveIntensity={on ? 2.4 : 0.15} toneMapped={false} />
+    </mesh>
+  )
+}
+
+function CarModel({ color, dark }: { color: string; dark: boolean }) {
+  const wheels = useRef<Group>(null)
+  useFrame((_, dt) => {
+    wheels.current?.children.forEach((wheel) => {
+      wheel.rotation.x += dt * 8
+    })
+  })
+  return (
+    <group>
+      <mesh position={[0, 0.28, 0]}>
+        <boxGeometry args={[0.52, 0.24, 1.12]} />
+        <meshStandardMaterial color={color} metalness={0.45} roughness={0.32} />
+      </mesh>
+      <mesh position={[0, 0.46, -0.06]}>
+        <boxGeometry args={[0.46, 0.18, 0.52]} />
+        <meshStandardMaterial color={dark ? '#0c1a28' : '#c5e0f5'} metalness={0.7} roughness={0.12} />
+      </mesh>
+      <mesh position={[0.18, 0.3, 0.52]}>
+        <boxGeometry args={[0.08, 0.06, 0.04]} />
+        <meshStandardMaterial color="#ffe08a" emissive="#ffe08a" emissiveIntensity={dark ? 1.4 : 0.3} />
+      </mesh>
+      <mesh position={[-0.18, 0.3, 0.52]}>
+        <boxGeometry args={[0.08, 0.06, 0.04]} />
+        <meshStandardMaterial color="#ffe08a" emissive="#ffe08a" emissiveIntensity={dark ? 1.4 : 0.3} />
+      </mesh>
+      <group ref={wheels}>
+        {[
+          [0.27, 0.12, 0.34],
+          [-0.27, 0.12, 0.34],
+          [0.27, 0.12, -0.34],
+          [-0.27, 0.12, -0.34],
+        ].map((p) => (
+          <mesh key={p.join(',')} position={p as [number, number, number]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.12, 0.12, 0.09, 12]} />
+            <meshStandardMaterial color="#111" roughness={0.9} />
+          </mesh>
+        ))}
+      </group>
+    </group>
+  )
+}
+
 function Cars({ dark }: { dark: boolean }) {
   const group = useRef<Group>(null)
-  const cars = useMemo(
-    () =>
-      Array.from({ length: 10 }, (_, i) => ({
-        id: i,
-        route: i % 4,
-        offset: i * 0.11,
-        speed: 0.07 + (i % 3) * 0.02,
-        color: i % 3 === 0 ? '#ff7900' : i % 3 === 1 ? '#007bff' : dark ? '#dbe7f4' : '#00234e',
-      })),
-    [dark],
-  )
+  const fleet = useMemo(() => {
+    const colors = ['#ff7900', '#007bff', '#ffffff', '#00234e', '#c0392b']
+    const list: { route: number; slot: number; total: number; color: string }[] = []
+    const routes = 6
+    const per = 3
+    for (let r = 0; r < routes; r += 1) {
+      for (let s = 0; s < per; s += 1) {
+        list.push({ route: r, slot: s, total: per, color: colors[(r + s) % colors.length] })
+      }
+    }
+    return list
+  }, [])
 
   useFrame(({ clock }) => {
     const nodes = group.current?.children
     if (!nodes) return
     const t = clock.elapsedTime
-    cars.forEach((car, i) => {
+    fleet.forEach((car, i) => {
       const node = nodes[i]
       if (!node) return
-      const u = (t * car.speed + car.offset) % 1
+      const u = (t * 0.045 + car.slot / car.total) % 1
       if (car.route === 0) {
-        node.position.set(0.7, 0.28, -16 + u * 30)
+        node.position.set(0.7, 0, -16 + u * 44)
         node.rotation.y = 0
       } else if (car.route === 1) {
-        node.position.set(-0.7, 0.28, 14 - u * 30)
+        node.position.set(-0.7, 0, 28 - u * 44)
         node.rotation.y = Math.PI
       } else if (car.route === 2) {
-        node.position.set(1 - u * 16, 0.28, 12.7)
+        node.position.set(-13.3, 0, -14 + u * 42)
+        node.rotation.y = 0
+      } else if (car.route === 3) {
+        node.position.set(-14.7, 0, 28 - u * 42)
+        node.rotation.y = Math.PI
+      } else if (car.route === 4) {
+        node.position.set(14 - u * 36, 0, 14.7)
         node.rotation.y = Math.PI / 2
       } else {
-        node.position.set(HQ.x - 0.65, 0.28, 13 + u * 18)
-        node.rotation.y = 0
+        node.position.set(-21 + u * 36, 0, 13.3)
+        node.rotation.y = -Math.PI / 2
       }
     })
   })
 
   return (
     <group ref={group}>
-      {cars.map((car) => (
-        <group key={car.id}>
-          <mesh>
-            <boxGeometry args={[0.42, 0.22, 0.9]} />
-            <meshStandardMaterial color={car.color} metalness={0.4} roughness={0.35} />
-          </mesh>
-          <mesh position={[0, 0.16, -0.08]}>
-            <boxGeometry args={[0.34, 0.16, 0.42]} />
-            <meshStandardMaterial color={dark ? '#0b1522' : '#9ec4e6'} metalness={0.6} roughness={0.15} />
-          </mesh>
+      {fleet.map((car, i) => (
+        <group key={i}>
+          <CarModel color={car.color} dark={dark} />
+        </group>
+      ))}
+    </group>
+  )
+}
+
+function Person({ shirt, skin = '#e2b48a' }: { shirt: string; skin?: string }) {
+  return (
+    <group>
+      <mesh position={[0, 1.02, 0]}>
+        <sphereGeometry args={[0.13, 12, 12]} />
+        <meshStandardMaterial color={skin} roughness={0.55} />
+      </mesh>
+      <mesh position={[0, 1.14, -0.02]}>
+        <sphereGeometry args={[0.135, 10, 8, 0, Math.PI * 2, 0, 1]} />
+        <meshStandardMaterial color="#1a1a1a" />
+      </mesh>
+      <mesh position={[0, 0.62, 0]}>
+        <capsuleGeometry args={[0.12, 0.34, 4, 8]} />
+        <meshStandardMaterial color={shirt} />
+      </mesh>
+      <mesh position={[-0.07, 0.2, 0]}>
+        <capsuleGeometry args={[0.045, 0.28, 3, 6]} />
+        <meshStandardMaterial color="#1e293b" />
+      </mesh>
+      <mesh position={[0.07, 0.2, 0]}>
+        <capsuleGeometry args={[0.045, 0.28, 3, 6]} />
+        <meshStandardMaterial color="#1e293b" />
+      </mesh>
+    </group>
+  )
+}
+
+function Pedestrians() {
+  const group = useRef<Group>(null)
+  const people = useMemo(
+    () =>
+      Array.from({ length: 16 }, (_, i) => ({
+        i,
+        shirt: ['#007bff', '#ff7900', '#ffffff', '#00234e', '#2ecc71'][i % 5],
+        route: i % 8,
+        offset: i * 0.08,
+      })),
+    [],
+  )
+
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime
+    people.forEach((p, i) => {
+      const node = group.current?.children[i]
+      if (!node) return
+      const u = (t * 0.06 + p.offset) % 1
+      const ping = u < 0.5 ? u * 2 : 1 - (u - 0.5) * 2
+      node.position.y = Math.abs(Math.sin(t * 7 + i)) * 0.03
+      if (p.route === 0) {
+        node.position.set(WALK, 0, -12 + ping * 36)
+        node.rotation.y = u < 0.5 ? 0 : Math.PI
+      } else if (p.route === 1) {
+        node.position.set(-WALK, 0, 22 - ping * 34)
+        node.rotation.y = u < 0.5 ? Math.PI : 0
+      } else if (p.route === 2) {
+        node.position.set(-14 + WALK, 0, -10 + ping * 32)
+        node.rotation.y = u < 0.5 ? 0 : Math.PI
+      } else if (p.route === 3) {
+        node.position.set(-14 - WALK, 0, 20 - ping * 30)
+        node.rotation.y = u < 0.5 ? Math.PI : 0
+      } else if (p.route === 4) {
+        node.position.set(10 - ping * 28, 0, 14 + WALK)
+        node.rotation.y = u < 0.5 ? Math.PI / 2 : -Math.PI / 2
+      } else if (p.route === 5) {
+        node.position.set(-18 + ping * 28, 0, 14 - WALK)
+        node.rotation.y = u < 0.5 ? -Math.PI / 2 : Math.PI / 2
+      } else if (p.route === 6) {
+        node.position.set(7 + WALK, 0, -8 + ping * 28)
+        node.rotation.y = u < 0.5 ? 0 : Math.PI
+      } else {
+        node.position.set(-7 - WALK, 0, 18 - ping * 26)
+        node.rotation.y = u < 0.5 ? Math.PI : 0
+      }
+    })
+  })
+
+  return (
+    <group ref={group}>
+      {people.map((p) => (
+        <group key={p.i}>
+          <Person shirt={p.shirt} />
         </group>
       ))}
     </group>
@@ -302,64 +590,108 @@ function HqMarks({ dark }: { dark: boolean }) {
   tex.colorSpace = SRGBColorSpace
   return (
     <group position={[HQ.x, 0, HQ.z]}>
-      <mesh position={[0, 9.1, -6.12]}>
-        <planeGeometry args={[3.4, 3.4]} />
+      <mesh position={[0, 2.72, -4.62]}>
+        <planeGeometry args={[1.7, 1.7]} />
         <meshBasicMaterial map={tex} toneMapped={false} />
       </mesh>
-      <mesh position={[0, 3.6, 5.72]} rotation={[0, Math.PI, 0]}>
-        <planeGeometry args={[4.4, 4.4]} />
+      <mesh position={[0, 1.7, 4.42]} rotation={[0, Math.PI, 0]}>
+        <planeGeometry args={[2.4, 2.4]} />
         <meshBasicMaterial map={tex} toneMapped={false} side={DoubleSide} />
       </mesh>
     </group>
   )
 }
 
+function InteriorPeople() {
+  const group = useRef<Group>(null)
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime
+    const a = group.current?.children[0]
+    const b = group.current?.children[1]
+    const c = group.current?.children[2]
+    if (a) {
+      a.position.set(-1.6 + Math.sin(t * 0.35) * 1.4, 0, 0.4)
+      a.rotation.y = Math.sin(t * 0.35) > 0 ? Math.PI / 2 : -Math.PI / 2
+    }
+    if (b) {
+      b.position.set(1.5, 0, -0.6 + Math.cos(t * 0.28) * 1.1)
+      b.rotation.y = Math.cos(t * 0.28) > 0 ? 0 : Math.PI
+    }
+    if (c) {
+      c.position.set(0.2, 0, 1.8)
+      c.rotation.y = Math.PI + Math.sin(t * 0.2) * 0.2
+    }
+  })
+  return (
+    <group ref={group} position={[HQ.x, 0, HQ.z]}>
+      <group>
+        <Person shirt="#007bff" />
+      </group>
+      <group>
+        <Person shirt="#ff7900" />
+      </group>
+      <group>
+        <Person shirt="#ffffff" />
+      </group>
+    </group>
+  )
+}
+
 function Headquarters({ dark }: { dark: boolean }) {
-  const wall = dark ? '#0a1628' : '#eef4fb'
+  const wall = dark ? '#f3efe8' : '#f7f4ef'
   const navy = '#00234e'
   return (
     <group position={[HQ.x, 0, HQ.z]}>
-      <mesh position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[8.2, 12.2]} />
-        <meshStandardMaterial color={dark ? '#151c28' : '#dbe6f2'} />
+      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[9.2, 10.4]} />
+        <meshStandardMaterial color={dark ? '#d9cbb8' : '#efe6d8'} />
       </mesh>
-      <mesh position={[0, 6, 5.95]}>
-        <boxGeometry args={[8.2, 12, 0.32]} />
-        <meshStandardMaterial color={navy} />
-      </mesh>
-      <mesh position={[-4.05, 6, 0]}>
-        <boxGeometry args={[0.32, 12, 12.2]} />
+      <mesh position={[0, 1.7, 4.7]}>
+        <boxGeometry args={[9.2, 3.4, 0.22]} />
         <meshStandardMaterial color={wall} />
       </mesh>
-      <mesh position={[4.05, 6, 0]}>
-        <boxGeometry args={[0.32, 12, 12.2]} />
+      <mesh position={[-4.5, 1.7, 0]}>
+        <boxGeometry args={[0.22, 3.4, 9.6]} />
         <meshStandardMaterial color={wall} />
       </mesh>
-      <mesh position={[-2.45, 6, -5.95]}>
-        <boxGeometry args={[3.3, 12, 0.36]} />
+      <mesh position={[4.5, 1.7, 0]}>
+        <boxGeometry args={[0.22, 3.4, 9.6]} />
+        <meshStandardMaterial color={wall} />
+      </mesh>
+      <mesh position={[-2.85, 1.7, -4.7]}>
+        <boxGeometry args={[3.5, 3.4, 0.22]} />
         <meshStandardMaterial color={navy} />
       </mesh>
-      <mesh position={[2.45, 6, -5.95]}>
-        <boxGeometry args={[3.3, 12, 0.36]} />
+      <mesh position={[2.85, 1.7, -4.7]}>
+        <boxGeometry args={[3.5, 3.4, 0.22]} />
         <meshStandardMaterial color={navy} />
       </mesh>
-      <mesh position={[0, 8.35, -5.95]}>
-        <boxGeometry args={[2.2, 7.3, 0.36]} />
+      <mesh position={[0, 2.72, -4.7]}>
+        <boxGeometry args={[2.2, 1.36, 0.22]} />
         <meshStandardMaterial color={navy} />
       </mesh>
-      <mesh position={[0, 12.15, 0]}>
-        <boxGeometry args={[8.6, 0.28, 12.6]} />
+      <mesh position={[0, 3.55, 0]} rotation={[0, Math.PI / 4, 0]}>
+        <coneGeometry args={[6.4, 1.5, 4]} />
         <meshStandardMaterial color="#ff7900" />
       </mesh>
-      <mesh position={[0, 1.6, -5.7]}>
-        <boxGeometry args={[2.05, 3.2, 0.08]} />
-        <meshStandardMaterial color={dark ? '#05070d' : '#1c2a3d'} />
+      <mesh position={[-2.2, 0.55, 1.4]}>
+        <boxGeometry args={[1.8, 0.12, 0.9]} />
+        <meshStandardMaterial color="#6b3e1d" />
       </mesh>
-      <pointLight position={[0, 4.2, 0]} intensity={dark ? 22 : 10} color="#007bff" />
-      <pointLight position={[0, 3.2, -2]} intensity={14} color="#ff7900" />
+      <mesh position={[2.1, 0.42, 2.2]}>
+        <boxGeometry args={[1.6, 0.45, 0.7]} />
+        <meshStandardMaterial color="#007bff" />
+      </mesh>
+      <mesh position={[2.1, 0.72, 2.2]}>
+        <boxGeometry args={[1.5, 0.18, 0.55]} />
+        <meshStandardMaterial color="#dbeafe" />
+      </mesh>
+      <pointLight position={[0, 2.4, 0]} intensity={dark ? 18 : 8} color="#fff4dc" distance={11} />
+      <pointLight position={[0, 1.8, 1.5]} intensity={8} color="#007bff" distance={8} />
       <Suspense fallback={null}>
         <HqMarks dark={dark} />
       </Suspense>
+      <InteriorPeople />
     </group>
   )
 }
@@ -370,35 +702,40 @@ function Flight({ progress }: { progress: MotionValue<number> }) {
     const { p, l } = samplePath(progress.get())
     cam.position.set(p[0], p[1], p[2])
     cam.lookAt(l[0], l[1], l[2])
-    cam.fov = 46 - progress.get() * 6
+    cam.fov = 48 - progress.get() * 8
     cam.updateProjectionMatrix()
   })
   return null
 }
 
 function CityWorld({ progress, dark }: { progress: MotionValue<number>; dark: boolean }) {
-  const sky = dark ? '#05070d' : '#c5def6'
+  const sky = dark ? '#071018' : '#b9d9f5'
   return (
     <>
       <color attach="background" args={[sky]} />
-      <fog attach="fog" args={[sky, dark ? 12 : 18, dark ? 42 : 56]} />
+      <fog attach="fog" args={[sky, dark ? 18 : 22, dark ? 58 : 64]} />
       {dark ? (
         <>
-          <ambientLight intensity={0.18} />
-          <directionalLight position={[10, 16, 6]} intensity={0.85} color="#9ecbff" />
-          <pointLight position={[0, 5, 8]} intensity={16} color="#007bff" />
+          <ambientLight intensity={0.28} />
+          <hemisphereLight args={['#1b3358', '#0d1a12', 0.45]} />
+          <directionalLight position={[8, 18, 6]} intensity={0.35} color="#9eb7d8" />
         </>
       ) : (
         <>
-          <hemisphereLight args={['#b9d8ff', '#eadcc8', 0.95]} />
-          <ambientLight intensity={0.58} />
+          <hemisphereLight args={['#b9d8ff', '#8fbf6a', 0.95]} />
+          <ambientLight intensity={0.62} />
           <directionalLight position={[16, 24, 10]} intensity={2.05} color="#fff3d6" />
         </>
       )}
+      <Ground dark={dark} />
       <Roads dark={dark} />
-      <Buildings dark={dark} />
+      <Houses dark={dark} />
+      <Apartments dark={dark} />
+      <Trees />
       <Lamps dark={dark} />
+      <TrafficLights />
       <Cars dark={dark} />
+      <Pedestrians />
       <Headquarters dark={dark} />
       <Flight progress={progress} />
     </>
@@ -409,13 +746,13 @@ export function CityScroll() {
   const { theme } = useTheme()
   const dark = theme === 'dark'
   const { scrollY } = useScroll()
-  const raw = useTransform(scrollY, [0, 3200], [0, 1])
+  const raw = useTransform(scrollY, [0, 3400], [0, 1])
   const progress = useSpring(raw, { stiffness: 64, damping: 26, restDelta: 0.001 })
 
   return (
     <div className={`city-fixed ${dark ? 'is-dark' : 'is-light'}`} aria-hidden="true">
       <div className="city-canvas">
-        <Canvas key={theme} camera={{ position: [0, 14, -20], fov: 46 }} dpr={[1, 1.5]}>
+        <Canvas key={theme} camera={{ position: [0, 12.5, -18], fov: 48 }} dpr={[1, 1.5]}>
           <CityWorld progress={progress} dark={dark} />
         </Canvas>
       </div>

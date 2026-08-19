@@ -153,7 +153,7 @@ export function HomePage() {
             <h2>On scrolle. Il tape.</h2>
           </div>
           <p>
-            Un développeur LK-group, à sa chaise, sur son clavier. Plus vous descendez, plus le code avance.
+            Un développeur LK-group, chez lui, à sa table, sur un vrai portable. Plus vous descendez, plus il tape.
           </p>
         </div>
         <div className="dev-frame card">
