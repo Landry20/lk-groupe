@@ -46,7 +46,7 @@ export function AboutPage() {
             { t: 'Solidité', d: 'Rôles, traces, documents, données séparées quand le métier l’exige.' },
             { t: 'Beauté utile', d: 'Un logiciel peut être beau. Quand il l’est, on l’ouvre plus souvent.' },
           ].map((item, i) => (
-            <Reveal key={item.t} delay={i * 0.08}>
+            <Reveal key={item.t} delay={i * 0.08} preset={i === 1 ? 'scale' : i === 0 ? 'left' : 'right'}>
               <article className="card">
                 <h3>{item.t}</h3>
                 <p>{item.d}</p>

@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Menu, Moon, Sun, X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { navItems } from '../data/content'
 import { useTheme } from '../context/ThemeContext'
@@ -11,17 +11,38 @@ export function Navbar() {
   const { theme, toggle } = useTheme()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
-  const hidden = pathname.startsWith('/admin')
+  const admin = pathname.startsWith('/admin')
+  const home = pathname === '/'
+  const [visible, setVisible] = useState(!home)
 
-  if (hidden) return null
+  useEffect(() => {
+    if (!home) {
+      setVisible(true)
+      return
+    }
+    const onScroll = () => {
+      const show = window.scrollY > 36
+      setVisible(show)
+      if (!show) setOpen(false)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [home])
+
+  if (admin) return null
 
   return (
     <>
       <motion.header
         className="nav"
-        initial={{ y: -40, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        initial={false}
+        animate={{
+          y: visible ? 0 : -120,
+          opacity: visible ? 1 : 0,
+        }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        style={{ pointerEvents: visible ? 'auto' : 'none' }}
       >
         <NavLink to="/" className="brand" onClick={() => setOpen(false)}>
           <BrandLogo />
@@ -69,7 +90,7 @@ export function Navbar() {
       </motion.header>
 
       <AnimatePresence>
-        {open && (
+        {open && visible && (
           <motion.nav
             className="mobile-panel"
             initial={{ opacity: 0, y: -12, scale: 0.96 }}

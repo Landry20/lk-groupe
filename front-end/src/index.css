@@ -93,6 +93,111 @@ select {
   padding-top: calc(var(--nav-h) + 12px);
 }
 
+.home-immersive {
+  padding-top: 0;
+}
+
+.home-immersive h1,
+.home-immersive h2,
+.home-immersive h3 {
+  text-shadow: 0 10px 28px rgba(255, 255, 255, 0.55);
+}
+
+html[data-theme='dark'] .home-immersive {
+  color: #f2f6ff;
+}
+
+html[data-theme='dark'] .home-immersive .lede,
+html[data-theme='dark'] .home-immersive .section-head p,
+html[data-theme='dark'] .home-immersive .muted {
+  color: rgba(242, 246, 255, 0.82);
+}
+
+html[data-theme='dark'] .home-immersive h1,
+html[data-theme='dark'] .home-immersive h2,
+html[data-theme='dark'] .home-immersive h3 {
+  text-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 60;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, #007bff, #ff7900);
+  pointer-events: none;
+}
+
+.city-fixed {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100dvh;
+  pointer-events: none;
+}
+
+.city-fixed::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.city-fixed.is-dark::after {
+  background:
+    linear-gradient(180deg, rgba(5, 7, 13, 0.18) 0%, transparent 28%, rgba(5, 7, 13, 0.45) 100%);
+}
+
+.city-fixed.is-light::after {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, transparent 32%, rgba(0, 35, 78, 0.16) 100%);
+}
+
+.city-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.city-canvas,
+.city-canvas canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.city-caption {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 8%;
+  z-index: 3;
+  max-width: 560px;
+  padding: 22px 24px;
+  border-radius: 28px;
+  background: var(--glass-strong);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow), var(--inset);
+  pointer-events: none;
+}
+
+.city-caption h2 {
+  margin: 8px 0 6px;
+  font-size: clamp(1.5rem, 3vw, 2.3rem);
+}
+
+@media (max-width: 960px) {
+  .city-caption {
+    left: 12px;
+    right: 12px;
+    bottom: 12%;
+  }
+}
+
 .bg-layer {
   position: fixed;
   inset: 0;
@@ -242,13 +347,13 @@ html[data-theme='dark'] .nav {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(0, 123, 255, 0.16));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(22, 163, 74, 0.16));
   box-shadow: var(--inset), 0 8px 18px var(--glow-blue);
   z-index: -1;
 }
 
 html[data-theme='dark'] .bubble-link .pip {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(0, 90, 200, 0.28));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(6, 78, 59, 0.42));
 }
 
 .nav-actions {
@@ -272,7 +377,7 @@ html[data-theme='dark'] .bubble-link .pip {
   padding: 11px 18px;
   cursor: pointer;
   font-weight: 700;
-  box-shadow: var(--inset), 0 10px 24px rgba(0, 35, 78, 0.12);
+  box-shadow: var(--inset), 0 10px 24px rgba(6, 78, 59, 0.12);
   transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
   overflow: hidden;
 }
@@ -312,6 +417,11 @@ html[data-theme='dark'] .bubble-btn {
   border-color: rgba(255, 255, 255, 0.4);
 }
 
+html[data-theme='dark'] .bubble-btn.accent {
+  background: linear-gradient(180deg, #ffb056, #ff7900);
+  color: #2a1400;
+}
+
 .icon-bubble {
   width: 44px;
   height: 44px;
@@ -331,6 +441,18 @@ html[data-theme='dark'] .bubble-btn {
   gap: 28px;
   align-items: center;
   min-height: calc(100dvh - 130px);
+}
+
+.hero-full {
+  grid-template-columns: 1fr;
+  min-height: 100dvh;
+  margin: 0 auto;
+  align-items: end;
+  padding-bottom: 12vh;
+}
+
+.hero-copy {
+  max-width: 720px;
 }
 
 .kicker {
@@ -542,7 +664,7 @@ button.card-hit {
   border-radius: 16px;
   display: grid;
   place-items: center;
-  background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(0,123,255,.12));
+  background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(22,163,74,.14));
   color: var(--blue);
 }
 
@@ -583,7 +705,7 @@ button.card-hit {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,121,0,.22));
+  background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(22,163,74,.28));
   z-index: -1;
   box-shadow: var(--inset);
 }

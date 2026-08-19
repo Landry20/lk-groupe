@@ -1,11 +1,10 @@
-import { motion } from 'framer-motion'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import { ArrowRight, Code2, Laptop, Megaphone, PenTool, LineChart, Cloud } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { company, flagshipProducts, services, stats } from '../data/content'
-import { Scene3D } from '../components/Scene3D'
 import { DeveloperScene } from '../components/DeveloperScene'
-import { Reveal } from '../components/Reveal'
+import { CountUp, Reveal } from '../components/Reveal'
 
 const serviceIcons = [Code2, Laptop, Megaphone, PenTool, LineChart, Cloud]
 
@@ -13,11 +12,14 @@ export function HomePage() {
   const navigate = useNavigate()
   const stock = flagshipProducts[0]
   const [variant, setVariant] = useState(0)
+  const { scrollY } = useScroll()
+  const heroOpacity = useTransform(scrollY, [0, 220, 420], [1, 0.55, 0])
+  const heroY = useTransform(scrollY, [0, 420], [0, -48])
 
   return (
-    <div className="page-wrap">
-      <section className="hero">
-        <div>
+    <div className="page-wrap home-immersive">
+      <section className="hero hero-full">
+        <motion.div className="hero-copy" style={{ opacity: heroOpacity, y: heroY }}>
           <motion.div className="kicker" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
             <i /> {company.name} · logiciels d’entreprise
           </motion.div>
@@ -37,28 +39,15 @@ export function HomePage() {
               Contactez-nous
             </button>
           </div>
-        </div>
-        <div className="hero-visual">
-          <Scene3D />
-          <motion.div
-            className="hero-badge card"
-            animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 4.2, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <strong>Solutions that inspire</strong>
-            <p className="muted" style={{ margin: '6px 0 0' }}>
-              experiences that leave a mark.
-            </p>
-          </motion.div>
-        </div>
+        </motion.div>
       </section>
 
       <section className="section">
         <div className="grid-4">
           {stats.map((item, i) => (
-            <Reveal key={item.label} delay={i * 0.08}>
+            <Reveal key={item.label} delay={i * 0.08} preset="scale">
               <div className="card stat">
-                <b>{item.value}</b>
+                <b><CountUp value={item.value} /></b>
                 {item.label}
               </div>
             </Reveal>
@@ -80,7 +69,7 @@ export function HomePage() {
           {services.map((service, i) => {
             const Icon = serviceIcons[i]
             return (
-              <Reveal key={service.id} delay={i * 0.06}>
+              <Reveal key={service.id} delay={i * 0.06} preset={i % 2 === 0 ? 'left' : 'right'}>
                 <motion.article className={`card ${service.highlight ? 'hot' : ''}`} whileHover={{ y: -8, rotateX: 4 }} transition={{ type: 'spring', stiffness: 260, damping: 20 }}>
                   <div className="ico"><Icon size={22} /></div>
                   <h3>{service.title}</h3>
@@ -139,7 +128,7 @@ export function HomePage() {
         </div>
         <div className="grid-3">
           {flagshipProducts.slice(1).map((product, i) => (
-            <Reveal key={product.id} delay={i * 0.08}>
+            <Reveal key={product.id} delay={i * 0.08} preset="scale">
               <button type="button" className="card card-hit" onClick={() => navigate(`/portfolio/${product.id === 'ecole' ? 'scolarnet' : product.id}`)}>
                 <div className="kicker">{product.tag}</div>
                 <h3>{product.name}</h3>

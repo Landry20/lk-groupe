@@ -41,7 +41,7 @@ export function PortfolioPage() {
         <section className="section" style={{ paddingTop: 0 }}>
           <div className="grid-3">
             {visible.map((project, i) => (
-              <Reveal key={project.id} delay={i * 0.04}>
+              <Reveal key={project.id} delay={i * 0.04} preset={i % 3 === 0 ? 'left' : i % 3 === 1 ? 'up' : 'right'}>
                 <button type="button" className="card card-hit" onClick={() => navigate(`/portfolio/${project.id}`)}>
                   <div className="kicker">{project.category}</div>
                   <h3>{project.title}</h3>
