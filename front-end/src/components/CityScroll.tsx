@@ -1,7 +1,7 @@
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useScroll, useSpring, useTransform, motion, type MotionValue } from 'framer-motion'
+import { useScroll, useSpring, type MotionValue } from 'framer-motion'
 import { useLayoutEffect, useMemo, useRef } from 'react'
-import { Color, Object3D } from 'three'
+import { Color, Object3D, PerspectiveCamera } from 'three'
 import type { InstancedMesh } from 'three'
 import { useTheme } from '../context/ThemeContext'
 
@@ -12,34 +12,6 @@ type Block = {
   w: number
   d: number
   color: string
-}
-
-const captions = [
-  { at: 0.08, title: "On survole la ville.", text: "Comme sur TikTok : tu scrolles, le monde avance." },
-  { at: 0.38, title: "On plonge entre les tours.", text: "Chaque immeuble, c'est un logiciel qu'on a fait tenir debout." },
-  { at: 0.68, title: "On roule au niveau de la rue.", text: "Cliniques, stocks, écoles, résidences — la ville métier." },
-  { at: 0.9, title: "On continue.", text: "Le prochain bâtiment, c'est le tien." },
-]
-
-function CaptionCard({
-  caption,
-  nextAt,
-  progress,
-}: {
-  caption: (typeof captions)[number]
-  nextAt: number
-  progress: MotionValue<number>
-}) {
-  const opacity = useTransform(progress, [caption.at - 0.08, caption.at, nextAt - 0.06, nextAt], [0, 1, 1, 0])
-  const y = useTransform(progress, [caption.at - 0.08, caption.at], [28, 0])
-
-  return (
-    <motion.div className="city-caption" style={{ opacity, y }}>
-      <div className="kicker"><i /> Scroll 3D</div>
-      <h2>{caption.title}</h2>
-      <p>{caption.text}</p>
-    </motion.div>
-  )
 }
 
 function makeCity(dark: boolean) {
@@ -167,15 +139,16 @@ function Ground({ dark }: { dark: boolean }) {
 
 function Flight({ progress }: { progress: MotionValue<number> }) {
   useFrame(({ camera }) => {
+    const cam = camera as PerspectiveCamera
     const t = progress.get()
     const z = -16 + t * 46
     const y = 11.5 * (1 - t) * (1 - t) + 1.35 + Math.sin(t * Math.PI) * 0.35
     const x = Math.sin(t * Math.PI * 1.6) * (1.15 * (1 - t * 0.35))
-    camera.position.set(x, y, z)
+    cam.position.set(x, y, z)
     const targetZ = z + 7 + t * 3
-    camera.lookAt(Math.sin(t * 2) * 0.3, 1.1 + (1 - t) * 1.4, targetZ)
-    camera.fov = 38 + t * 10
-    camera.updateProjectionMatrix()
+    cam.lookAt(Math.sin(t * 2) * 0.3, 1.1 + (1 - t) * 1.4, targetZ)
+    cam.fov = 38 + t * 10
+    cam.updateProjectionMatrix()
   })
 
   return null
@@ -226,14 +199,6 @@ export function CityScroll() {
           <CityWorld progress={progress} dark={dark} />
         </Canvas>
       </div>
-      {captions.map((caption, index) => (
-        <CaptionCard
-          key={caption.title}
-          caption={caption}
-          nextAt={index === captions.length - 1 ? 1 : captions[index + 1].at}
-          progress={scrollYProgress}
-        />
-      ))}
     </div>
   )
 }
